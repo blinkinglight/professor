@@ -19,46 +19,11 @@ func SetToken(t string) {
 
 // Handle adds standard pprof handlers to mux.
 func Handle(mux *http.ServeMux) {
-	mux.HandleFunc("/debug/pprof/", handleIndex)
-	mux.HandleFunc("/debug/pprof/cmdline", handleCmdline)
-	mux.HandleFunc("/debug/pprof/profile", handleProfile)
-	mux.HandleFunc("/debug/pprof/symbol", handleSymbol)
-	mux.HandleFunc("/debug/pprof/trace", handleTrace)
-}
-
-func handleIndex(w http.ResponseWriter, r *http.Request) {
-	if !checkToken(w, r) {
-		return
-	}
-	pprof.Index(w, r)
-}
-
-func handleCmdline(w http.ResponseWriter, r *http.Request) {
-	if !checkToken(w, r) {
-		return
-	}
-	pprof.Cmdline(w, r)
-}
-
-func handleProfile(w http.ResponseWriter, r *http.Request) {
-	if !checkToken(w, r) {
-		return
-	}
-	pprof.Profile(w, r)
-}
-
-func handleSymbol(w http.ResponseWriter, r *http.Request) {
-	if !checkToken(w, r) {
-		return
-	}
-	pprof.Symbol(w, r)
-}
-
-func handleTrace(w http.ResponseWriter, r *http.Request) {
-	if !checkToken(w, r) {
-		return
-	}
-	pprof.Symbol(w, r)
+	mux.HandleFunc("/debug/pprof/", checkToken(pprof.Index))
+	mux.HandleFunc("/debug/pprof/cmdline", checkToken(pprof.Cmdline))
+	mux.HandleFunc("/debug/pprof/profile", checkToken(pprof.Profile))
+	mux.HandleFunc("/debug/pprof/symbol", checkToken(pprof.Symbol))
+	mux.HandleFunc("/debug/pprof/trace", checkToken(pprof.Trace))
 }
 
 // NewServeMux builds a ServeMux and populates it with standard pprof handlers.
@@ -88,10 +53,12 @@ func Launch(addr string) {
 	}()
 }
 
-func checkToken(w http.ResponseWriter, r *http.Request) bool {
-	if r.URL.Query().Get("token") != token {
-		http.NotFound(w, r)
-		return false
+func checkToken(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("token") != token {
+			http.NotFound(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
 	}
-	return true
 }
