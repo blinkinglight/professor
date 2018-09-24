@@ -1,6 +1,7 @@
 package professor
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/pprof"
@@ -19,6 +20,7 @@ func SetToken(t string) {
 
 // Handle adds standard pprof handlers to mux.
 func Handle(mux *http.ServeMux) {
+	mux.HandleFunc("/robots.txt", robots)
 	mux.HandleFunc("/debug/pprof/", checkToken(pprof.Index))
 	mux.HandleFunc("/debug/pprof/cmdline", checkToken(pprof.Cmdline))
 	mux.HandleFunc("/debug/pprof/profile", checkToken(pprof.Profile))
@@ -61,4 +63,9 @@ func checkToken(next http.HandlerFunc) http.HandlerFunc {
 		}
 		next.ServeHTTP(w, r)
 	}
+}
+
+func robots(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "User-agent: *")
+	fmt.Fprintln(w, "Disallow: /")
 }
