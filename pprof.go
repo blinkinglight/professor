@@ -9,9 +9,19 @@ import (
 
 var token = "securitytoken"
 
+var basicAuth = false
+var basicAuthUser string
+var basicAuthPassword string
+
 // init disables default handlers registered by importing net/http/pprof.
 func init() {
 	http.DefaultServeMux = http.NewServeMux()
+}
+
+func SetBasicAuth(user, password string) {
+	basicAuth = true
+	basicAuthUser = user
+	basicAuthPassword = password
 }
 
 func SetToken(t string) {
@@ -57,9 +67,17 @@ func Launch(addr string) {
 
 func checkToken(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Get("token") != token {
+		if !basicAuth && r.URL.Query().Get("token") != token {
 			http.NotFound(w, r)
 			return
+		} else if basicAuth {
+			user, pass, ok := r.BasicAuth()
+			if user != basicAuthUser || pass != basicAuthPassword || !ok {
+				w.Header().Set("WWW-Authenticate", `Basic realm="Please login"`)
+				w.WriteHeader(401)
+				w.Write([]byte("Unauthorised.\n"))
+				return
+			}
 		}
 		next.ServeHTTP(w, r)
 	}

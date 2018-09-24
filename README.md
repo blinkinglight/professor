@@ -6,6 +6,8 @@ import "runtime"
 
 func main() {
 	professor.SetToken("tokenstring") // default: securitytoken
+	// or basic auth
+	// professor.SetBasicAuth("user", "pass")
 	professor.Launch(":1234")
 
 	runtime.Goexit()
