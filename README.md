@@ -1,5 +1,5 @@
 # professor - golang secure pprof
-Safer interface to Golang net/http/pprof
+Sometimes you need to expose things to internet, so some basic protection to debug/pprof would be useful.
 
 ```go
 import "runtime" 
